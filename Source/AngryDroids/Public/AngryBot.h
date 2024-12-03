@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "DroidBullets.h"
 #include "Components/SphereComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include "GameFramework/Actor.h"
 #include "AngryBot.generated.h"
 
@@ -16,6 +17,7 @@ class ANGRYDROIDS_API AAngryBot : public AActor
 public:
 	// Sets default values for this actor's properties
 	AAngryBot();
+	void ExceptionHandlingForFire();
 
 	UPROPERTY(EditAnywhere)
 	USceneComponent* Root;
@@ -30,6 +32,8 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	void RotateTowardsPlayer(float DeltaTime);
+	void SpawnNiagaraSystem(FTransform SpawnTransform, UNiagaraSystem* EffectToSpawn) const;
+	void PlaySound(FTransform SpawnTransform, USoundBase* SoundToPlay);
 	void SpawnProjectile(FTransform SpawnTransform, FActorSpawnParameters SpawnInfo);
 	void FireBullets();
 
@@ -59,6 +63,12 @@ public:
 
 	UPROPERTY(EditAnywhere , BlueprintReadWrite , Category="Bot Value")
 	TSubclassOf<ADroidBullets> BulletClass;
+
+	UPROPERTY(EditAnywhere , BlueprintReadWrite , Category="Bot Value")
+	UNiagaraSystem* FireFX;
+
+	UPROPERTY(EditAnywhere , BlueprintReadWrite , Category="Bot Value")
+	USoundBase* FireSound;
 	
 	
 	UPROPERTY(EditAnywhere , BlueprintReadWrite , Category="BotConfig")

@@ -3,8 +3,6 @@
 
 #include "AngryDroids/Public/DroidBullets.h"
 
-#include "Components/BoxComponent.h"
-
 
 // Sets default values
 ADroidBullets::ADroidBullets()

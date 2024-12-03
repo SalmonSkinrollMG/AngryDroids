@@ -1,7 +1,6 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "AngryDroids/Public/AngryBot.h"
-#include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 
@@ -22,6 +21,21 @@ AAngryBot::AAngryBot()
 	StaticMesh->SetupAttachment(Root);
 }
 
+void AAngryBot::ExceptionHandlingForFire()
+{
+	if(!IsValid(FireFX))
+	{
+		bAllowFire = false;
+		UE_LOG(LogTemp , Warning , TEXT("Some important attributes in the class config is not assigned -- FireFX "));
+	}
+	if(!IsValid(FireSound))
+	{
+		bAllowFire = false;
+		UE_LOG(LogTemp , Warning , TEXT("Some important attributes in the class config is not assigned  -- FireSound"));
+	}
+	
+}
+
 // Called when the game starts or when spawned
 void AAngryBot::BeginPlay()
 {
@@ -34,6 +48,7 @@ void AAngryBot::BeginPlay()
 	{
 		StartTimer();
 	}
+	ExceptionHandlingForFire();
 }
 
 void AAngryBot::RotateTowardsPlayer(float DeltaTime)
@@ -47,9 +62,23 @@ void AAngryBot::RotateTowardsPlayer(float DeltaTime)
 	}
 }
 
+void AAngryBot::SpawnNiagaraSystem(FTransform SpawnTransform, UNiagaraSystem* EffectToSpawn) const
+{
+	UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), EffectToSpawn, SpawnTransform.GetTranslation(), SpawnTransform.GetRotation().Rotator());
+}
+
+void AAngryBot::PlaySound(FTransform SpawnTransform, USoundBase* SoundToPlay)
+{
+	UGameplayStatics::PlaySoundAtLocation(this, SoundToPlay, SpawnTransform.GetTranslation());
+}
+
 void AAngryBot::SpawnProjectile(FTransform SpawnTransform, const FActorSpawnParameters SpawnInfo)
 {
 	GetWorld()->SpawnActor<ADroidBullets>(BulletClass, SpawnTransform.GetTranslation(),SpawnTransform.GetRotation().Rotator() , SpawnInfo);
+
+	SpawnNiagaraSystem(SpawnTransform, FireFX);
+	
+	PlaySound(SpawnTransform, FireSound);
 	
 	bFlipFlop = !bFlipFlop;
 }
