@@ -7,20 +7,19 @@
 #include "Components/SphereComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "GameFramework/Actor.h"
+#include "Interfaces/DamageInterface.h"
 #include "AngryBot.generated.h"
 
 UCLASS()
-class ANGRYDROIDS_API AAngryBot : public AActor
+class ANGRYDROIDS_API AAngryBot : public AActor,public IDamageInterface
 {
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this actor's properties
-	AAngryBot();
-	void ExceptionHandlingForFire();
 
-	UPROPERTY(EditAnywhere)
-	USceneComponent* Root;
+	AAngryBot();
+	
+	bool CheckForExceptionsInFire() const;
 
 	UPROPERTY(EditAnywhere)
 	UStaticMeshComponent* StaticMesh;
@@ -29,17 +28,20 @@ public:
 	USphereComponent* SphereComponent;
 
 protected:
-	// Called when the game starts or when spawned
+	
 	virtual void BeginPlay() override;
 	void RotateTowardsPlayer(float DeltaTime);
-	void SpawnNiagaraSystem(FTransform SpawnTransform, UNiagaraSystem* EffectToSpawn) const;
-	void PlaySound(FTransform SpawnTransform, USoundBase* SoundToPlay);
-	void SpawnProjectile(FTransform SpawnTransform, FActorSpawnParameters SpawnInfo);
+	void SpawnNiagaraSystem(const FTransform& SpawnTransform, UNiagaraSystem* EffectToSpawn) const;
+	void PlaySound(const FTransform& SpawnTransform, USoundBase* SoundToPlay) const;
+	void SpawnProjectile(const FTransform& SpawnTransform, const FActorSpawnParameters& SpawnInfo);
 	void FireBullets();
+	void SelfDestruct();
 
 public:
-	// Called every frame
+
 	virtual void Tick(float DeltaTime) override;
+
+	virtual void ApplyDamage(float Damage , AActor* DamageCause) override;
 
 private:
 	
@@ -47,7 +49,7 @@ private:
 	AActor* Player;
 
 	UFUNCTION()
-	void StartTimer();
+	void StartTimerForFire();
 
 public:
 	bool bFlipFlop{false};
@@ -68,6 +70,9 @@ public:
 	UNiagaraSystem* FireFX;
 
 	UPROPERTY(EditAnywhere , BlueprintReadWrite , Category="Bot Value")
+	UNiagaraSystem* DestructionFX;
+
+	UPROPERTY(EditAnywhere , BlueprintReadWrite , Category="Bot Value")
 	USoundBase* FireSound;
 	
 	
@@ -77,10 +82,18 @@ public:
 	UPROPERTY(EditAnywhere , BlueprintReadWrite , Category="BotConfig")
 	bool bAlteredFire{true};
 
+	UPROPERTY(EditAnywhere , BlueprintReadWrite , Category="BotConfig")
+	float MaxHealth{100.0f};
+	
+	UPROPERTY(EditAnywhere , BlueprintReadWrite , Category="BotConfig")
+	float FireInterval{1.0}; 
+
+private:
+	float CurrentHealth{0.0f};
+
 	/*
 	 * The Rate at which the bullets are fired in seconds.
 	 * if bAlteredfire is disabled , the interval is applied at the same time for both.
 	 */
-	UPROPERTY(EditAnywhere , BlueprintReadWrite , Category="BotConfig")
-	float FireInterval{1.0}; 
+	
 };
