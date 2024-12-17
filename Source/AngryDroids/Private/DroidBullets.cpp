@@ -5,7 +5,9 @@
 
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
+#include "ObjectPoolSubsystem.h"
 #include "Interfaces/DamageInterface.h"
+
 
 
 // Sets default values
@@ -20,6 +22,15 @@ ADroidBullets::ADroidBullets()
 	ProjectileComponent =  CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileComponent"));
 }
 
+void ADroidBullets::ReturnToPool()
+{
+	UObjectPoolSubsystem* PoolingSubsystem = GetGameInstance()->GetSubsystem<UObjectPoolSubsystem>();
+	if (PoolingSubsystem)
+	{
+		//PoolingSubsystem->ReturnPooledObject(this);
+		UE_LOG(LogTemp, Log, TEXT("Returned Object to Pool"));
+	}
+}
 
 void ADroidBullets::OnComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
@@ -28,9 +39,10 @@ void ADroidBullets::OnComponentHit(UPrimitiveComponent* HitComponent, AActor* Ot
 	HitTransform.SetLocation(Hit.Location);
 	HitTransform.SetRotation(FQuat::Identity);
 	SpawnNiagaraSystem(HitTransform,HitFX);
-	Destroy();
-}
+	
+	ReturnToPool();
 
+}
 
 void ADroidBullets::BeginPlay()
 {
@@ -57,5 +69,10 @@ void ADroidBullets::ApplyDamageToActor(AActor* OtherActor)
 void ADroidBullets::SpawnNiagaraSystem(const FTransform& SpawnTransform, UNiagaraSystem* EffectToSpawn) const
 {
 	UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), EffectToSpawn, SpawnTransform.GetTranslation(), SpawnTransform.GetRotation().Rotator());
+}
+
+void ADroidBullets::ReInitializeBullets() const
+{
+	StaticMesh->SetCollisionProfileName(CollisionPresetName,false);
 }
 

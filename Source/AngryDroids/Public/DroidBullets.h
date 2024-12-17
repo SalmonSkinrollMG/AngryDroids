@@ -16,6 +16,7 @@ class ANGRYDROIDS_API ADroidBullets : public AActor
 public:
 	// Sets default values for this actor's properties
 	ADroidBullets();
+	void ReturnToPool();
 
 	UPROPERTY(EditAnywhere)
 	UStaticMeshComponent* StaticMesh;
@@ -39,6 +40,12 @@ public:
 
 	UPROPERTY(EditAnywhere, Blueprintable , Category = "BulletsProperties")
 	float BulletDamage{10.0f};
+
+	UPROPERTY(EditAnywhere, Blueprintable , Category = "BulletsProperties")
+	UMaterialInstance* BulletMaterial;
+
+	UPROPERTY(EditAnywhere, Blueprintable , Category = "BulletsProperties")
+	FName CollisionPresetName;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
 	TSubclassOf<UDamageType> DamageTypeClass;
@@ -46,4 +53,16 @@ public:
 	UFUNCTION()
 	void ApplyDamageToActor(AActor* OtherActor);
 	void SpawnNiagaraSystem(const FTransform& SpawnTransform, UNiagaraSystem* EffectToSpawn) const;
+
+	void SetMaterialInstance(UMaterialInstance* Material)
+	{
+		BulletMaterial = Material;
+	}
+
+	void SetCollsionPreset(FName PresetNamee)
+	{
+		CollisionPresetName = PresetNamee;
+	}
+
+	void ReInitializeBullets() const;
 };

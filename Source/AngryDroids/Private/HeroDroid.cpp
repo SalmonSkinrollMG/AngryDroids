@@ -2,11 +2,11 @@
 
 
 #include "HeroDroid.h"
-
 #include "AngryBot.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "NiagaraFunctionLibrary.h"
+#include "ObjectPoolSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 
 
@@ -29,6 +29,7 @@ AHeroDroid::AHeroDroid()
 
 	// Optionally, initialize NiagaraComponent as a child of StaticMesh
 	NiagaraComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("NiagaraComponent"));
+	
 	if (NiagaraComponent)
 	{
 		NiagaraComponent->SetupAttachment(StaticMesh);
@@ -128,10 +129,32 @@ void AHeroDroid::PlaySound(const FTransform& SpawnTransform, USoundBase* SoundTo
 	UGameplayStatics::PlaySoundAtLocation(this, SoundToPlay, SpawnTransform.GetTranslation());
 }
 
-void AHeroDroid::SpawnProjectileAtLocation(const FTransform& SpawnTransform, const FActorSpawnParameters& SpawnInfo)
+bool AHeroDroid::SpawnProjectileAtLocationFromPool(FTransform SpawnTransform)
 {
-	GetWorld()->SpawnActor<ADroidBullets>(BulletClass, SpawnTransform.GetTranslation(),SpawnTransform.GetRotation().Rotator() , SpawnInfo);
+	UWorld* World = GetWorld();
+	if (!World || !BulletClass) return false;
 
+	if (UObjectPoolSubsystem* PoolingSubsystem = World->GetGameInstance()->GetSubsystem<UObjectPoolSubsystem>())
+	{
+		if (AActor* PooledActor = PoolingSubsystem->GetPooledObject(World, BulletClass))
+		{
+			// Move the actor to a desired location and reactivate
+			PooledActor->SetActorLocation(SpawnTransform.GetTranslation());
+			PooledActor->SetActorRotation(SpawnTransform.GetRotation().Rotator());
+			PooledActor->SetActorHiddenInGame(false);
+			UE_LOG(LogTemp, Log, TEXT("Spawned Pooled Object"));
+		}
+	}
+	return true;
+}
+
+void AHeroDroid::SpawnProjectileAtLocation(const FTransform& SpawnTransform)
+{
+	if (!SpawnProjectileAtLocationFromPool(SpawnTransform))
+	{
+		return;
+	}
+	
 	SpawnNiagaraSystemAtLocation(SpawnTransform, FireFX);
 	
 	PlaySound(SpawnTransform, FireSound);
@@ -147,15 +170,14 @@ void AHeroDroid::TriggerFire()
 		FTransform SpawnTransform = FTransform::Identity;
 		SpawnTransform.SetTranslation(FVector(1, 1, 1));
 		SpawnTransform =  bFlipFlop ? StaticMesh->GetSocketTransform(RightFirearmName) : StaticMesh->GetSocketTransform(LeftFirearmName);
-		
-		const FActorSpawnParameters SpawnInfo;
+
 	
-		SpawnProjectileAtLocation(SpawnTransform, SpawnInfo);
+		SpawnProjectileAtLocation(SpawnTransform);
 	
 		if(!bAlteredFire)
 		{
 			SpawnTransform =  bFlipFlop ? StaticMesh->GetSocketTransform(RightFirearmName) : StaticMesh->GetSocketTransform(LeftFirearmName);
-			SpawnProjectileAtLocation(SpawnTransform , SpawnInfo);
+			SpawnProjectileAtLocation(SpawnTransform);
 		}
 	}
 }

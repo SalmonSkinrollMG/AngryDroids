@@ -49,7 +49,8 @@ public:
 	void Look(const FInputActionValue& Value);
 	void SpawnNiagaraSystemAtLocation( const FTransform& SpawnTransform, UNiagaraSystem* EffectToSpawn);
 	void PlaySound(const FTransform& SpawnTransform, USoundBase* SoundToPlay) const;
-	void SpawnProjectileAtLocation(const FTransform& SpawnTransform, const FActorSpawnParameters& SpawnInfo);
+	bool SpawnProjectileAtLocationFromPool(FTransform SpawnPosition);
+	void SpawnProjectileAtLocation(const FTransform& SpawnTransform);
 	void TriggerFire();
 	void Fire(const FInputActionValue& Value);
 
@@ -106,3 +107,4 @@ public:
 private:
 	float CurrentHealth{0.0f};
 };
+
