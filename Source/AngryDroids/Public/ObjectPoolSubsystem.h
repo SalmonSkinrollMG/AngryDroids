@@ -9,6 +9,7 @@
 /**
  * 
  */
+
 UCLASS()
 class ANGRYDROIDS_API UObjectPoolSubsystem : public UGameInstanceSubsystem
 {
@@ -18,23 +19,23 @@ class ANGRYDROIDS_API UObjectPoolSubsystem : public UGameInstanceSubsystem
 public:
 	
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
-	
-	virtual void Deinitialize() override;
-
-	// Manager Functions for polling
-	AActor* GetPooledObject(UWorld* World, TSubclassOf<AActor> ActorClass);
-	void ReturnPooledObject(AActor* PooledActor);
-
-	static void DestroyActorsFromMap(TMap<TSubclassOf<AActor>, TArray<AActor*>> ActorMap);
 
 private:
-	// Main storage to STore all the pooled actors
-	TMap<TSubclassOf<AActor>, TArray<AActor*>> ActivePool;
+	virtual void Deinitialize() override;
+	bool FetchAndRemoveFromInActivePool(TSubclassOf<AActor> ActorClass, AActor*& FetchedActor);
+	void SpawnNewActorToPool(TSubclassOf<AActor> ActorClass, AActor*& SpawnedActor);
+	void DeactivateActor(AActor* Actor);
+	void ActivateActor(AActor* Actor);
 
-	TMap<TSubclassOf<AActor>, TArray<AActor*>> InactivePool;
+	TMap<TSubclassOf<AActor>,TArray<AActor*>> InActivePoolMap;
+	
+	TMap<TSubclassOf<AActor>,TArray<AActor*>> ActivePoolMap;
+	
+	TMap<TSubclassOf<AActor>, uint8 > PoolSize;
 
+	
 
-	AActor* CreateNewActor(UWorld* World, TSubclassOf<AActor> ActorClass);
-	static void ActivateActor(AActor* Actor , bool bShouldActivate);
-
+public:
+	AActor* GetActorFromPool(TSubclassOf<AActor> ActorClass);
+	void ReturnActorToPool(AActor* ReturningActor);
 };

@@ -136,12 +136,19 @@ bool AHeroDroid::SpawnProjectileAtLocationFromPool(FTransform SpawnTransform)
 
 	if (UObjectPoolSubsystem* PoolingSubsystem = World->GetGameInstance()->GetSubsystem<UObjectPoolSubsystem>())
 	{
-		if (AActor* PooledActor = PoolingSubsystem->GetPooledObject(World, BulletClass))
+		if (AActor* PooledActor = PoolingSubsystem->GetActorFromPool(BulletClass))
 		{
 			// Move the actor to a desired location and reactivate
 			PooledActor->SetActorLocation(SpawnTransform.GetTranslation());
 			PooledActor->SetActorRotation(SpawnTransform.GetRotation().Rotator());
 			PooledActor->SetActorHiddenInGame(false);
+			ADroidBullets* Bullet  = Cast<ADroidBullets>(PooledActor);
+			if (Bullet)
+			{
+				FVector ShootDirection = GetActorForwardVector();
+				Bullet->ProjectileComponent->Velocity = ShootDirection * Bullet->BulletSpeed;
+				Bullet->ActivateBullet();
+			}
 			UE_LOG(LogTemp, Log, TEXT("Spawned Pooled Object"));
 		}
 	}

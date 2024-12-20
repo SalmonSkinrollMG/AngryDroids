@@ -36,6 +36,7 @@ protected:
 	void SpawnProjectile(const FTransform& SpawnTransform, const FActorSpawnParameters& SpawnInfo);
 	void FireBullets();
 	void SelfDestruct();
+	void SpawnProjectileFromPool(const FTransform& SpawnTransform, const FActorSpawnParameters& SpawnInfo);
 
 public:
 

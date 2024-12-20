@@ -27,7 +27,7 @@ void ADroidBullets::ReturnToPool()
 	UObjectPoolSubsystem* PoolingSubsystem = GetGameInstance()->GetSubsystem<UObjectPoolSubsystem>();
 	if (PoolingSubsystem)
 	{
-		//PoolingSubsystem->ReturnPooledObject(this);
+		PoolingSubsystem->ReturnActorToPool(this);
 		UE_LOG(LogTemp, Log, TEXT("Returned Object to Pool"));
 	}
 }
@@ -39,20 +39,32 @@ void ADroidBullets::OnComponentHit(UPrimitiveComponent* HitComponent, AActor* Ot
 	HitTransform.SetLocation(Hit.Location);
 	HitTransform.SetRotation(FQuat::Identity);
 	SpawnNiagaraSystem(HitTransform,HitFX);
-	
+	ProjectileComponent->StopMovementImmediately();
 	ReturnToPool();
-
 }
 
 void ADroidBullets::BeginPlay()
 {
 	Super::BeginPlay();
 	StaticMesh->OnComponentHit.AddDynamic(this, &ADroidBullets::OnComponentHit);
+	ActivateBullet();
 }
 
 void ADroidBullets::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+}
+
+void ADroidBullets::ActivateBullet()
+{
+	ProjectileComponent->SetUpdatedComponent(GetRootComponent());
+	GetWorld()->GetTimerManager().SetTimer(
+		BulletLifeHandle,
+		this,
+		&ADroidBullets::EndBulletLife,
+		BulletLifeSpan,
+		false
+	);
 }
 
 void ADroidBullets::ApplyDamageToActor(AActor* OtherActor)
@@ -71,8 +83,19 @@ void ADroidBullets::SpawnNiagaraSystem(const FTransform& SpawnTransform, UNiagar
 	UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), EffectToSpawn, SpawnTransform.GetTranslation(), SpawnTransform.GetRotation().Rotator());
 }
 
-void ADroidBullets::ReInitializeBullets() const
+
+void ADroidBullets::EndBulletLife()
 {
-	StaticMesh->SetCollisionProfileName(CollisionPresetName,false);
+	ClearBulletLifeHandle();
+	ProjectileComponent->StopMovementImmediately();
+	ReturnToPool();
+}
+
+void ADroidBullets::ClearBulletLifeHandle()
+{
+	if(BulletLifeHandle.IsValid())
+	{
+		BulletLifeHandle.Invalidate();
+	}
 }
 

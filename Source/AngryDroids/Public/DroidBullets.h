@@ -37,15 +37,17 @@ protected:
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	void ActivateBullet();
 
 	UPROPERTY(EditAnywhere, Blueprintable , Category = "BulletsProperties")
 	float BulletDamage{10.0f};
 
-	UPROPERTY(EditAnywhere, Blueprintable , Category = "BulletsProperties")
-	UMaterialInstance* BulletMaterial;
 
 	UPROPERTY(EditAnywhere, Blueprintable , Category = "BulletsProperties")
-	FName CollisionPresetName;
+	float BulletLifeSpan{3.0};
+
+	UPROPERTY(EditAnywhere, Blueprintable , Category = "BulletsProperties")
+	float BulletSpeed{3000.0};
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage")
 	TSubclassOf<UDamageType> DamageTypeClass;
@@ -54,15 +56,9 @@ public:
 	void ApplyDamageToActor(AActor* OtherActor);
 	void SpawnNiagaraSystem(const FTransform& SpawnTransform, UNiagaraSystem* EffectToSpawn) const;
 
-	void SetMaterialInstance(UMaterialInstance* Material)
-	{
-		BulletMaterial = Material;
-	}
+	void EndBulletLife();
+	void ClearBulletLifeHandle();
 
-	void SetCollsionPreset(FName PresetNamee)
-	{
-		CollisionPresetName = PresetNamee;
-	}
-
-	void ReInitializeBullets() const;
+private:
+	FTimerHandle BulletLifeHandle; 
 };
