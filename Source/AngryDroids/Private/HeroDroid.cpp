@@ -26,14 +26,6 @@ AHeroDroid::AHeroDroid()
 
 	// Create the FloatingPawnMovement component
 	FloatingPawnMovement = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("FloatingPawnMovement"));
-
-	// Optionally, initialize NiagaraComponent as a child of StaticMesh
-	NiagaraComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("NiagaraComponent"));
-	
-	if (NiagaraComponent)
-	{
-		NiagaraComponent->SetupAttachment(StaticMesh);
-	}
 	
 	CurrentHealth  = MaxHealth;
 	if(CheckForExceptionsInFire())
@@ -107,21 +99,7 @@ void AHeroDroid::Look(const FInputActionValue& Value)
 void AHeroDroid::SpawnNiagaraSystemAtLocation(const FTransform& SpawnTransform, UNiagaraSystem* EffectToSpawn)
 {
 	
-	NiagaraComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
-		EffectToSpawn,
-		RootComponent,
-		NAME_None,
-		SpawnTransform.GetTranslation(),
-		SpawnTransform.GetRotation().Rotator(),
-		EAttachLocation::KeepRelativeOffset,
-		true
-	);
-	if (NiagaraComponent)
-	{
-		NiagaraComponent->SetRelativeLocation(FVector::ZeroVector);
-		NiagaraComponent->SetRelativeRotation(FRotator::ZeroRotator);
-		NiagaraComponent->SetRelativeScale3D(FVector(1.0f));
-	}
+	UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), EffectToSpawn, SpawnTransform.GetTranslation(), SpawnTransform.GetRotation().Rotator());
 }
 
 void AHeroDroid::PlaySound(const FTransform& SpawnTransform, USoundBase* SoundToPlay) const
@@ -192,6 +170,15 @@ void AHeroDroid::TriggerFire()
 void AHeroDroid::Fire(const FInputActionValue& Value)
 {
 	TriggerFire();
+}
+
+void AHeroDroid::ApplyDamage(float Damage, AActor* DamageCauser)
+{
+	CurrentHealth = CurrentHealth - Damage;
+	if(CurrentHealth <= 0)
+	{
+		SpawnNiagaraSystemAtLocation(GetActorTransform(), DestructionFX);
+	}
 }
 
 // Called to bind functionality to input

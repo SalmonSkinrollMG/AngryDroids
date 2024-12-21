@@ -38,6 +38,8 @@ protected:
 	void SelfDestruct();
 	void SpawnProjectileFromPool(const FTransform& SpawnTransform, const FActorSpawnParameters& SpawnInfo);
 
+	void MoveTowardPlayer(FVector Destination , float DeltaTime);
+
 public:
 
 	virtual void Tick(float DeltaTime) override;
@@ -47,10 +49,15 @@ public:
 private:
 	
 	UPROPERTY()
-	AActor* Player;
+	AActor* PlayerToFollow;
 
 	UFUNCTION()
 	void StartTimerForFire();
+
+	UFUNCTION()
+	void StartTimerToMove();
+
+
 
 public:
 	bool bFlipFlop{false};
@@ -87,11 +94,17 @@ public:
 	float MaxHealth{100.0f};
 	
 	UPROPERTY(EditAnywhere , BlueprintReadWrite , Category="BotConfig")
-	float FireInterval{1.0}; 
+	float FireInterval{1.0};
+
+	UPROPERTY(EditAnywhere , BlueprintReadWrite , Category="BotConfig")
+	float UpdatePlayerLocationFrequency{10.0};
+
+	UPROPERTY(EditAnywhere , BlueprintReadWrite , Category="BotConfig")
+	float MoveInterpSpeed{5.0};
 
 private:
 	float CurrentHealth{0.0f};
-
+	FVector FollowingPlayerLocation;
 	/*
 	 * The Rate at which the bullets are fired in seconds.
 	 * if bAlteredfire is disabled , the interval is applied at the same time for both.

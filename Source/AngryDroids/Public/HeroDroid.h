@@ -9,12 +9,13 @@
 #include "InputMappingContext.h"
 #include "NiagaraSystem.h"
 #include "NiagaraComponent.h"
+#include "Interfaces/DamageInterface.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
 #include "HeroDroid.generated.h"
 
 UCLASS()
-class ANGRYDROIDS_API AHeroDroid : public APawn
+class ANGRYDROIDS_API AHeroDroid : public APawn,public IDamageInterface
 {
 	GENERATED_BODY()
 
@@ -34,9 +35,7 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	USphereComponent* SphereComponent;
-
-	UPROPERTY()
-	UNiagaraComponent* NiagaraComponent;
+	
 
 	UPROPERTY(EditAnywhere)
 	UFloatingPawnMovement* FloatingPawnMovement;
@@ -98,8 +97,9 @@ public:
 	float MaxHealth{100.0f};
 	
 	UPROPERTY(EditAnywhere , BlueprintReadWrite , Category="BotConfig")
-	float FireInterval{1.0}; 
+	float FireInterval{1.0};
 
+	virtual void ApplyDamage(float Damage, AActor* DamageCauser) override;
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 

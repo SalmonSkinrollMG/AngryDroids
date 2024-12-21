@@ -19,7 +19,7 @@ AAngryBot::AAngryBot()
 	SphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComponent"));
 	SphereComponent->SetupAttachment(StaticMesh);
 	
-	
+	FollowingPlayerLocation = FVector::ZeroVector;
 	CurrentHealth  = MaxHealth;
 }
 
@@ -30,7 +30,9 @@ void AAngryBot::BeginPlay()
 	UGameplayStatics::GetAllActorsOfClass(GetWorld() , APawn::StaticClass() , Players);
 	if(Players.IsValidIndex(0))
 	{
-		Player = Players[0];
+		PlayerToFollow = Players[0];
+		FollowingPlayerLocation = PlayerToFollow->GetActorLocation();
+		StartTimerToMove();
 	}
 	if(CheckForExceptionsInFire())
 	{
@@ -75,6 +77,22 @@ void AAngryBot::StartTimerForFire()
 		FireInterval,
 		true
 	);
+}
+
+void AAngryBot::StartTimerToMove()
+{
+	FTimerHandle TimerHandle; 
+
+	GetWorld()->GetTimerManager().SetTimer(
+		   TimerHandle,
+		   [this]() 
+		   {
+			   FollowingPlayerLocation = PlayerToFollow->GetActorLocation();
+		   },
+		   UpdatePlayerLocationFrequency ,
+		   true
+		   );
+		   
 }
 
 void AAngryBot::FireBullets()
@@ -128,6 +146,14 @@ void AAngryBot::SpawnProjectileFromPool(const FTransform& SpawnTransform, const 
 	}
 }
 
+void AAngryBot::MoveTowardPlayer(FVector Destination, float DeltaTime)
+{
+	FVector CurrentLocation = GetActorLocation();
+	FVector NewLocation = FMath::VInterpTo(CurrentLocation, Destination, DeltaTime, MoveInterpSpeed);
+	
+	SetActorLocation(NewLocation , true);
+}
+
 void AAngryBot::SpawnProjectile(const FTransform& SpawnTransform, const FActorSpawnParameters& SpawnInfo)
 {
 	SpawnProjectileFromPool(SpawnTransform, SpawnInfo);
@@ -154,6 +180,7 @@ void AAngryBot::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	RotateTowardsPlayer(DeltaTime);
+	MoveTowardPlayer(FollowingPlayerLocation , DeltaTime);
 }
 
 void AAngryBot::ApplyDamage(float Damage, AActor* DamageCause)
@@ -168,9 +195,9 @@ void AAngryBot::ApplyDamage(float Damage, AActor* DamageCause)
 
 void AAngryBot::RotateTowardsPlayer(float DeltaTime)
 {
-	if (Player)
+	if (PlayerToFollow)
 	{
-		FVector TargetLocation = Player->GetActorLocation();
+		FVector TargetLocation = PlayerToFollow->GetActorLocation();
 		const FRotator DesiredRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation() , TargetLocation);
 		const FRotator InterpolatedRotation = FMath::RInterpTo(GetActorRotation() , DesiredRotation, DeltaTime, InterpolationSpeed);
 		SetActorRotation(InterpolatedRotation);
