@@ -26,18 +26,7 @@ AAngryBot::AAngryBot()
 void AAngryBot::BeginPlay()
 {
 	Super::BeginPlay();
-	TArray<AActor*> Players;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld() , APawn::StaticClass() , Players);
-	if(Players.IsValidIndex(0))
-	{
-		PlayerToFollow = Players[0];
-		FollowingPlayerLocation = PlayerToFollow->GetActorLocation();
-		StartTimerToMove();
-	}
-	if(CheckForExceptionsInFire())
-	{
-		StartTimerForFire();
-	}
+
 }
 
 bool AAngryBot::CheckForExceptionsInFire() const
@@ -66,6 +55,18 @@ bool AAngryBot::CheckForExceptionsInFire() const
 	return bSafetoFire;
 }
 
+void AAngryBot::AssignAndActivateEnemy(AActor* PlayerRef)
+{
+	PlayerToFollow = PlayerRef;
+	FollowingPlayerLocation = PlayerToFollow->GetActorLocation();
+	StartTimerToMove();
+
+	if(CheckForExceptionsInFire())
+	{
+		StartTimerForFire();
+	}
+}
+
 void AAngryBot::StartTimerForFire()
 {
 	FTimerHandle TimerHandle; 
@@ -75,24 +76,44 @@ void AAngryBot::StartTimerForFire()
 		this,
 		&AAngryBot::FireBullets,
 		FireInterval,
-		true
+		true,
+		ActivationDelay
 	);
+}
+
+void AAngryBot::ClearTimerForMove()
+{
+	if(MoveTimerHandle.IsValid())
+	{
+		MoveTimerHandle.Invalidate();
+	}
 }
 
 void AAngryBot::StartTimerToMove()
 {
-	FTimerHandle TimerHandle; 
 
 	GetWorld()->GetTimerManager().SetTimer(
-		   TimerHandle,
+		   MoveTimerHandle,
 		   [this]() 
 		   {
-			   FollowingPlayerLocation = PlayerToFollow->GetActorLocation();
+		   	//This offset will prevent from bots clutching togetter.d
+		   	
+		   	FollowingPlayerLocation = CalculateRandomPositionAroundActor(PlayerToFollow);
 		   },
 		   UpdatePlayerLocationFrequency ,
-		   true
+		   true,
+		   ActivationDelay
 		   );
 		   
+}
+FVector AAngryBot::CalculateRandomPositionAroundActor(AActor* Actor)
+{
+	FVector ActorPosition = Actor->GetActorLocation();
+	float RandomAngle = FMath::RandRange(0.0f, 360.0f);
+	FVector Offset = FVector(FMath::Cos(FMath::DegreesToRadians(RandomAngle)) * EffectiveFireRange,
+							  FMath::Sin(FMath::DegreesToRadians(RandomAngle)) * EffectiveFireRange,
+							  0.0f);
+	return ActorPosition + Offset;
 }
 
 void AAngryBot::FireBullets()
@@ -146,7 +167,7 @@ void AAngryBot::SpawnProjectileFromPool(const FTransform& SpawnTransform, const 
 	}
 }
 
-void AAngryBot::MoveTowardPlayer(FVector Destination, float DeltaTime)
+auto AAngryBot::MoveTowardPlayer(FVector Destination, float DeltaTime) -> void
 {
 	FVector CurrentLocation = GetActorLocation();
 	FVector NewLocation = FMath::VInterpTo(CurrentLocation, Destination, DeltaTime, MoveInterpSpeed);
@@ -189,6 +210,7 @@ void AAngryBot::ApplyDamage(float Damage, AActor* DamageCause)
 	if(CurrentHealth <= 0)
 	{
 		SpawnNiagaraSystem(GetActorTransform(), DestructionFX);
+		ClearTimerForMove();
 		Destroy();
 	}
 }

@@ -3,6 +3,7 @@
 
 #include "EnemySpawner.h"
 
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 
 
@@ -35,7 +36,6 @@ uint8 AEnemySpawner::GetLargestEnemyLevel()
 void AEnemySpawner::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 
@@ -44,6 +44,11 @@ void AEnemySpawner::StartWave(uint8 WaveCount, uint8 MaximumWeight)
 	TArray<uint8> EnemyLevels;
 	GetEnemiesBasedOnLevel(WaveCount , MaximumWeight , EnemyLevels);
 	SpawnEnemies(EnemyLevels);
+}
+
+void AEnemySpawner::SetActivePlayer(AActor* Player)
+{
+	ActivePlayer = Player;
 }
 
 
@@ -101,7 +106,7 @@ void AEnemySpawner::SpawnEnemies(TArray<uint8>& EnemyLevels)
 		FVector SpawnLocation = GetRandomPointInVolume(); // Get a random spawn point
 
 		AAngryBot* SpawnedEnemy = GetWorld()->SpawnActor<AAngryBot>(*EnemyMap.Find(Level), SpawnLocation, FRotator::ZeroRotator);
-
+		SpawnedEnemy->AssignAndActivateEnemy(ActivePlayer);
 		SpawnedEnemies.Add(SpawnedEnemy);
 		
 	}

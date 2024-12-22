@@ -21,6 +21,8 @@ public:
 	
 	bool CheckForExceptionsInFire() const;
 
+	void AssignAndActivateEnemy(AActor* PlayerRef);
+
 	UPROPERTY(EditAnywhere)
 	UStaticMeshComponent* StaticMesh;
 
@@ -55,8 +57,14 @@ private:
 	void StartTimerForFire();
 
 	UFUNCTION()
-	void StartTimerToMove();
+	void ClearTimerForMove();
 
+	UFUNCTION()
+	void StartTimerToMove();
+	FVector CalculateRandomPositionAroundActor(AActor* Actor);
+
+	UPROPERTY()
+	FTimerHandle MoveTimerHandle; 
 
 
 public:
@@ -100,7 +108,13 @@ public:
 	float UpdatePlayerLocationFrequency{10.0};
 
 	UPROPERTY(EditAnywhere , BlueprintReadWrite , Category="BotConfig")
+	float ActivationDelay{5.0};
+
+	UPROPERTY(EditAnywhere , BlueprintReadWrite , Category="BotConfig")
 	float MoveInterpSpeed{5.0};
+
+	UPROPERTY(EditAnywhere , BlueprintReadWrite , Category="BotConfig")
+	float EffectiveFireRange{200.0};
 
 private:
 	float CurrentHealth{0.0f};

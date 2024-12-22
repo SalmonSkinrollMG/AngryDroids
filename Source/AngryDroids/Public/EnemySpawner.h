@@ -20,6 +20,7 @@ public:
 	AEnemySpawner();
 	
 	void StartWave(uint8 WaveCount, uint8 MaximumWeight);
+	void SetActivePlayer(AActor* Player);
 
 protected:
 	virtual void BeginPlay() override;
@@ -34,6 +35,9 @@ private:
 
 	UPROPERTY()
 	TArray<AAngryBot*> SpawnedEnemies;
+
+	UPROPERTY()
+	AActor* ActivePlayer{nullptr};
 
 public:
 
