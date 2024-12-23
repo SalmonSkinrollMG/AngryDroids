@@ -26,25 +26,39 @@ void ADroidGameMode::SetActivePlayer()
 void ADroidGameMode::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	if(IsValid(GameHudClass))
+	{
+		if(IsValid(GameHud))
+		{
+			GameHud->AddToViewport(0);
+			return;
+		}
+		GameHud = CreateWidget<UGameHud>(GetWorld(), GameHudClass);
+		GameHud->AddToViewport(0);
+	}
 	if(EnemySpawnerClass)
 	{
 		EnemySpawner = GetWorld()->SpawnActor<AEnemySpawner>(EnemySpawnerClass, FVector::ZeroVector, FRotator::ZeroRotator);
 		SetActivePlayer(); // Sends the reference of the heroActor to the Enemy Spawner. All the enemies spawned will have this reference.
 		TriggerNextWave();
 	}
+	
 }
 
 void ADroidGameMode::StartWaveTimer()
 {
+	
 	GetWorld()->GetTimerManager().SetTimer(
 		WaveHandler,
 		this,
 		&ADroidGameMode::EndWave,
 		WaveTime,
-		false,
-		2
+		false
 	);
+	if(IsValid(GameHud))
+	{
+		GameHud->StartWaveTimer(WaveTime);
+	}
 }
 
 TTuple<uint8, uint8> ADroidGameMode::GetDataFromTable(uint8 Wave) const
@@ -75,6 +89,10 @@ void ADroidGameMode::TriggerNextWave()
 void ADroidGameMode::EndWave()
 {
 	ClearWaveTimer();
+	if(IsValid(GameHud))
+	{
+		GameHud->StopWaveTimer();
+	}
 }
 
 void ADroidGameMode::StartGame()
@@ -86,7 +104,7 @@ void ADroidGameMode::ClearWaveTimer()
 {
 	if(WaveHandler.IsValid())
 	{
-		WaveHandler.Invalidate();
+		GetWorld()->GetTimerManager().ClearTimer(WaveHandler);
 	}
 }
 

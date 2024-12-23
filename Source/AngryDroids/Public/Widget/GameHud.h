@@ -20,4 +20,16 @@ class ANGRYDROIDS_API UGameHud : public UUserWidget
 
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* CurrentWave;
+
+public:
+	void StartWaveTimer(uint8 MaxTime);
+	void StopWaveTimer();
+
+private:
+	UFUNCTION()
+	void UpdateTimeInHud();
+
+	uint8 CurrentTime{0};
+
+	FTimerHandle WaveTimerHandle; 
 };

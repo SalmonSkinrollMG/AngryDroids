@@ -73,6 +73,7 @@ void AHeroDroid::BeginPlay()
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
 	}
+	OwningController = Cast<ADroidPlayerController>(GetController());
 	
 }
 
@@ -98,7 +99,6 @@ void AHeroDroid::Look(const FInputActionValue& Value)
 
 void AHeroDroid::SpawnNiagaraSystemAtLocation(const FTransform& SpawnTransform, UNiagaraSystem* EffectToSpawn)
 {
-	
 	UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), EffectToSpawn, SpawnTransform.GetTranslation(), SpawnTransform.GetRotation().Rotator());
 }
 
@@ -123,7 +123,7 @@ bool AHeroDroid::SpawnProjectileAtLocationFromPool(FTransform SpawnTransform)
 			ADroidBullets* Bullet  = Cast<ADroidBullets>(PooledActor);
 			if (Bullet)
 			{
-				FVector ShootDirection = GetActorForwardVector();
+				FVector ShootDirection = GetTargetAndDirection();
 				Bullet->ProjectileComponent->Velocity = ShootDirection * Bullet->BulletSpeed;
 				Bullet->ActivateBullet();
 			}
@@ -172,9 +172,73 @@ void AHeroDroid::Fire(const FInputActionValue& Value)
 	TriggerFire();
 }
 
+bool AHeroDroid::CalculateDirectionFromHit(FHitResult HitResult, bool bHit, FVector& Value1)
+{
+	if (bHit && HitResult.GetActor())
+	{
+		FVector HitActorLocation = HitResult.GetActor()->GetActorLocation();
+		FVector PawnLocation = GetActorLocation();
+
+		// Calculate the direction vector (Target - Pawn)
+		FVector Direction = HitActorLocation - PawnLocation;
+
+		// Normalize the direction vector
+		Direction.Normalize();
+
+		Value1 = Direction;
+		return true;
+	}
+	return false;
+}
+
+FVector AHeroDroid::GetTargetAndDirection()
+{
+	FVector TargetDirection = GetActorForwardVector();
+	if (!OwningController)
+	{
+		return TargetDirection;
+	}
+
+	//View Point of the player
+	FVector ViewLocation;
+	FRotator ViewRotation;
+	OwningController->GetPlayerViewPoint(ViewLocation, ViewRotation);
+
+	// Start location + ForwardVector from rotation + Distance
+	FVector TraceEnd = ViewLocation + (ViewRotation.Vector() * TraceDistance);
+	
+	FHitResult HitResult;
+	
+	bool bHit = GetWorld()->LineTraceSingleByChannel(
+		HitResult,
+		ViewLocation,
+		TraceEnd,
+		ECC_GameTraceChannel1
+	);
+
+	if(bEnableFireTrace)
+	{
+		DrawDebugLine(
+		GetWorld(),
+		ViewLocation,
+		TraceEnd,
+		bHit ? FColor::Green : FColor::Red,
+		false,
+		1.0f,
+		0, 
+		1.0f);
+	}
+	
+
+	CalculateDirectionFromHit(HitResult, bHit, TargetDirection);
+	return TargetDirection;
+}
+
+
 void AHeroDroid::ApplyDamage(float Damage, AActor* DamageCauser)
 {
 	CurrentHealth = CurrentHealth - Damage;
+	OwningController->UpdateHealth(CurrentHealth);
 	if(CurrentHealth <= 0)
 	{
 		SpawnNiagaraSystemAtLocation(GetActorTransform(), DestructionFX);

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "EnemySpawner.h"
 #include "GameFramework/GameMode.h"
+#include "Widget/GameHud.h"
 #include "DroidGameMode.generated.h"
 
 /**
@@ -28,6 +29,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
 	UDataTable* WaveDataTable;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
+	TSubclassOf<UGameHud> GameHudClass;
+
 private:
 	UPROPERTY()
 	AEnemySpawner* EnemySpawner;
@@ -42,6 +46,9 @@ private:
 	void EndWave();
 
 	FTimerHandle WaveHandler;
+
+	UPROPERTY()
+	UGameHud* GameHud;
 
 public:
 	void StartGame();

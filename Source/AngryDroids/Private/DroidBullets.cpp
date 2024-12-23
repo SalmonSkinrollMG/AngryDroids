@@ -95,7 +95,7 @@ void ADroidBullets::ClearBulletLifeHandle()
 {
 	if(BulletLifeHandle.IsValid())
 	{
-		BulletLifeHandle.Invalidate();
+		GetWorld()->GetTimerManager().ClearTimer(BulletLifeHandle);
 	}
 }
 

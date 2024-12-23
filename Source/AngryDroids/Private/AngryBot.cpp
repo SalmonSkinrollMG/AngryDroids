@@ -85,7 +85,7 @@ void AAngryBot::ClearTimerForMove()
 {
 	if(MoveTimerHandle.IsValid())
 	{
-		MoveTimerHandle.Invalidate();
+		GetWorld()->GetTimerManager().ClearTimer(MoveTimerHandle);
 	}
 }
 

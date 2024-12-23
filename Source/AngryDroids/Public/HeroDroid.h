@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "DroidBullets.h"
+#include "DroidPlayerController.h"
 #include "GameFramework/Pawn.h"
 #include "InputAction.h"
 #include "InputMappingContext.h"
@@ -52,6 +53,8 @@ public:
 	void SpawnProjectileAtLocation(const FTransform& SpawnTransform);
 	void TriggerFire();
 	void Fire(const FInputActionValue& Value);
+	bool CalculateDirectionFromHit(FHitResult HitResult, bool bHit, FVector& Value1);
+	FVector GetTargetAndDirection();
 
 	// Enhanced Input
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
@@ -98,6 +101,14 @@ public:
 	
 	UPROPERTY(EditAnywhere , BlueprintReadWrite , Category="BotConfig")
 	float FireInterval{1.0};
+	
+	UPROPERTY(EditAnywhere , BlueprintReadWrite , Category="BotConfig")
+	float TraceDistance{1000.0f};
+
+//Debug variables
+	UPROPERTY(EditAnywhere , BlueprintReadWrite , Category="BotConfig")
+	bool bEnableFireTrace{false};
+	
 
 	virtual void ApplyDamage(float Damage, AActor* DamageCauser) override;
 
@@ -106,5 +117,8 @@ public:
 
 private:
 	float CurrentHealth{0.0f};
+
+	UPROPERTY()
+	ADroidPlayerController* OwningController;
 };
 
