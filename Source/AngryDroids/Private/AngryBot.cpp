@@ -96,9 +96,7 @@ void AAngryBot::StartTimerToMove()
 		   MoveTimerHandle,
 		   [this]() 
 		   {
-		   	//This offset will prevent from bots clutching togetter.d
-		   	
-		   	FollowingPlayerLocation = CalculateRandomPositionAroundActor(PlayerToFollow);
+		   		FollowingPlayerLocation = CalculateRandomPositionAroundActor(PlayerToFollow);
 		   },
 		   UpdatePlayerLocationFrequency ,
 		   true,
@@ -211,7 +209,10 @@ void AAngryBot::ApplyDamage(float Damage, AActor* DamageCause)
 	{
 		SpawnNiagaraSystem(GetActorTransform(), DestructionFX);
 		ClearTimerForMove();
-		Destroy();
+		if(OnAngryBotDied.IsBound())
+		{
+			OnAngryBotDied.Broadcast(this);
+		}
 	}
 }
 

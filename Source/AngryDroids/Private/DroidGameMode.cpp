@@ -19,8 +19,10 @@ void ADroidGameMode::SetActivePlayer()
 	UGameplayStatics::GetAllActorsOfClass(GetWorld() , AHeroDroid::StaticClass() , Players);
 	if(Players.IsValidIndex(0))
 	{
+		HeroDroid = Cast<AHeroDroid>(Players[0]);
 		EnemySpawner->SetActivePlayer(Players[0]);
 	}
+	
 }
 
 void ADroidGameMode::BeginPlay()
@@ -34,15 +36,31 @@ void ADroidGameMode::BeginPlay()
 			return;
 		}
 		GameHud = CreateWidget<UGameHud>(GetWorld(), GameHudClass);
-		GameHud->AddToViewport(0);
+		GameHud->AddToViewport(1);
+	}
+	if(GameHud)
+	{
+		GameHud->StartGameButton->OnClicked.AddDynamic(this , &ADroidGameMode::StartGameButtonClicked);
+		GameHud->ExitGameButton->OnClicked.AddDynamic(this , &ADroidGameMode::ExitGameButtonClicked);
+		GameHud->HomeButton->OnClicked.AddDynamic(this , &ADroidGameMode::HomeButtonClicked);
 	}
 	if(EnemySpawnerClass)
 	{
 		EnemySpawner = GetWorld()->SpawnActor<AEnemySpawner>(EnemySpawnerClass, FVector::ZeroVector, FRotator::ZeroRotator);
 		SetActivePlayer(); // Sends the reference of the heroActor to the Enemy Spawner. All the enemies spawned will have this reference.
-		TriggerNextWave();
 	}
 	
+}
+
+void ADroidGameMode::Destroyed()
+{
+	Super::Destroyed();
+	if(IsValid(GameHud))
+	{
+		GameHud->StartGameButton->OnClicked.RemoveAll(this);
+		GameHud->ExitGameButton->OnClicked.RemoveAll(this);
+		GameHud->HomeButton->OnClicked.RemoveAll(this);
+	}
 }
 
 void ADroidGameMode::StartWaveTimer()
@@ -51,7 +69,7 @@ void ADroidGameMode::StartWaveTimer()
 	GetWorld()->GetTimerManager().SetTimer(
 		WaveHandler,
 		this,
-		&ADroidGameMode::EndWave,
+		&ADroidGameMode::EndGame,
 		WaveTime,
 		false
 	);
@@ -78,6 +96,11 @@ void ADroidGameMode::TriggerNextWave()
 {
 	StartWaveTimer();
 	TTuple<uint8 , uint8> WaveData = GetDataFromTable(CurrentWave);
+	if(HeroDroid)
+	{
+		HeroDroid->ResetCharacterProperties();
+	}
+	
 
 	if(EnemySpawner)
 	{
@@ -93,11 +116,13 @@ void ADroidGameMode::EndWave()
 	{
 		GameHud->StopWaveTimer();
 	}
+	CurrentWave++;
+	InitializeNextWave();
 }
 
 void ADroidGameMode::StartGame()
 {
-	
+	TriggerNextWave();
 }
 
 void ADroidGameMode::ClearWaveTimer()
@@ -108,7 +133,72 @@ void ADroidGameMode::ClearWaveTimer()
 	}
 }
 
+void ADroidGameMode::ClearLoadingTimer()
+{
+	if(LoadingTimeHandle.IsValid())
+	{
+		GetWorld()->GetTimerManager().ClearTimer(LoadingTimeHandle);
+	}
+}
+
 void ADroidGameMode::EndGame()
 {
 	ClearWaveTimer();
+	if(EnemySpawner)
+	{
+		EnemySpawner->DestroyALlEnemies();
+	}
+	if(IsValid(GameHud))
+	{
+		GameHud->StopWaveTimer();
+		GameHud->SwitchWidgetWithIndex(2);
+		if(HeroDroid)
+		{
+			HeroDroid->EnableMouse(true);
+		}
+	}
+	
+}
+
+void ADroidGameMode::LoadedNextWave()
+{
+	ClearLoadingTimer();
+	GameHud->SwitchWidgetWithIndex(1);
+	if(HeroDroid)
+	{
+		HeroDroid->EnableMouse(false);
+	}
+}
+
+void ADroidGameMode::InitializeNextWave()
+{
+	GameHud->SetCurrentWaveText(CurrentWave+1);
+	GameHud->SwitchWidgetWithIndex(3);
+	GameHud->TriggerWaveWithLoadingTime(1 / LoadingTime);
+	TriggerNextWave();
+	GetWorld()->GetTimerManager().SetTimer(
+		LoadingTimeHandle,
+		this,
+		&ADroidGameMode::LoadedNextWave,
+		LoadingTime,
+		false
+	);
+}
+
+void ADroidGameMode::StartGameButtonClicked()
+{
+	InitializeNextWave();
+}
+
+void ADroidGameMode::ExitGameButtonClicked()
+{
+	if(IsValid(HeroDroid))
+	{
+		HeroDroid->QuitGame();
+	}
+}
+
+void ADroidGameMode::HomeButtonClicked()
+{
+	GameHud->SwitchWidgetWithIndex(0);
 }

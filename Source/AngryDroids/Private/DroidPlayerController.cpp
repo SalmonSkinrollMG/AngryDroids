@@ -20,7 +20,7 @@ void ADroidPlayerController::CreatePlayerwidget()
 		return;
 	}
 	PlayerWidget = CreateWidget<UPlayerWidget>(this , PlayerWidgetClass);
-	PlayerWidget->AddToViewport(1);
+	PlayerWidget->AddToViewport(0);
 }
 
 void ADroidPlayerController::UpdateHealth(const float CurrentHealth) const

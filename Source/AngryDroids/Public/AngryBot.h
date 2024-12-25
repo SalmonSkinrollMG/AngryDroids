@@ -9,7 +9,7 @@
 #include "GameFramework/Actor.h"
 #include "Interfaces/DamageInterface.h"
 #include "AngryBot.generated.h"
-
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAngryBotDiedEvent, AAngryBot*, AngryBot);
 UCLASS()
 class ANGRYDROIDS_API AAngryBot : public AActor,public IDamageInterface
 {
@@ -47,6 +47,10 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void ApplyDamage(float Damage , AActor* DamageCause) override;
+
+	// Event Delegate
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnAngryBotDiedEvent OnAngryBotDied;
 
 private:
 	

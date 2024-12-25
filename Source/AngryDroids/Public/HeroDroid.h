@@ -55,6 +55,9 @@ public:
 	void Fire(const FInputActionValue& Value);
 	bool CalculateDirectionFromHit(FHitResult HitResult, bool bHit, FVector& Value1);
 	FVector GetTargetAndDirection();
+	void QuitGame();
+	void EnableMouse(bool bEnable) const;
+	void ResetCharacterProperties();
 
 	// Enhanced Input
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
@@ -120,5 +123,7 @@ private:
 
 	UPROPERTY()
 	ADroidPlayerController* OwningController;
+
+	
 };
 

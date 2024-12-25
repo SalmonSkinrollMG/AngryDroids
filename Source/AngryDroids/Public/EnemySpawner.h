@@ -51,7 +51,12 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Spawning") 
 	TMap<int , TSubclassOf<AAngryBot>> EnemyMap;
 
+	void CheckForWaveComplete();
 	
+	UFUNCTION()
+	void EnemyDiedEvent(AAngryBot* AngryBot);
+
+	void DestroyALlEnemies();
 
 public:    
 	virtual void Tick(float DeltaTime) override;

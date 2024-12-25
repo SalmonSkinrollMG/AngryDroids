@@ -3,6 +3,7 @@
 
 #include "EnemySpawner.h"
 
+#include "DroidGameMode.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 
@@ -88,7 +89,7 @@ void AEnemySpawner::GetEnemiesBasedOnLevel(uint8 WaveCount, uint8 MaximumWeight,
 	 * Adjust distribution for optimal diversity
 	 * For example, [3, 3, 1] may be adjusted to [3, 2, 2] for diversity.
 	 */
-	for (int32 i = 0; i < EnemyLevels.Num() - 1; ++i)
+	for (uint8 i = 0; i < EnemyLevels.Num() - 1; ++i)
 	{
 		if (EnemyLevels[i] > EnemyLevels[i + 1] + 1)
 		{
@@ -107,8 +108,48 @@ void AEnemySpawner::SpawnEnemies(TArray<uint8>& EnemyLevels)
 
 		AAngryBot* SpawnedEnemy = GetWorld()->SpawnActor<AAngryBot>(*EnemyMap.Find(Level), SpawnLocation, FRotator::ZeroRotator);
 		SpawnedEnemy->AssignAndActivateEnemy(ActivePlayer);
+		SpawnedEnemy->OnAngryBotDied.AddDynamic(this , &AEnemySpawner::EnemyDiedEvent);
 		SpawnedEnemies.Add(SpawnedEnemy);
 		
+	}
+}
+
+void AEnemySpawner::CheckForWaveComplete()
+{
+	if(SpawnedEnemies.Num() == 0)
+	{
+		ADroidGameMode* DroidGameMode = Cast<ADroidGameMode>(GetWorld()->GetAuthGameMode());
+		DroidGameMode->EndWave();
+	}
+}
+
+void AEnemySpawner::EnemyDiedEvent(AAngryBot* AngryBot)
+{
+	for(uint8 i = 0 ; i<SpawnedEnemies.Num() ; i++)
+	{
+		if(SpawnedEnemies[i] == AngryBot)
+		{
+			SpawnedEnemies.RemoveAt(i);
+			CheckForWaveComplete();
+			AngryBot->Destroy();
+		}
+	}
+}
+
+void AEnemySpawner::DestroyALlEnemies()
+{
+	if(SpawnedEnemies.Num() > 0)
+	{
+		for (AAngryBot* AngryBot : SpawnedEnemies)
+		{
+			if (AngryBot && !AngryBot->IsPendingKillPending())
+			{
+				AngryBot->Destroy();
+			}
+		}
+
+		// Clear the array after destroying the actors
+		SpawnedEnemies.Empty();
 	}
 }
 

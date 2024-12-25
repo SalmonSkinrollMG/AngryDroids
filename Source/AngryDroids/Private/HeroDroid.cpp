@@ -3,6 +3,7 @@
 
 #include "HeroDroid.h"
 #include "AngryBot.h"
+#include "DroidGameMode.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "NiagaraFunctionLibrary.h"
@@ -234,6 +235,43 @@ FVector AHeroDroid::GetTargetAndDirection()
 	return TargetDirection;
 }
 
+void AHeroDroid::QuitGame()
+{
+	if (OwningController)
+	{
+		UKismetSystemLibrary::QuitGame(OwningController, nullptr, EQuitPreference::Quit, true);
+	}
+}
+
+void AHeroDroid::EnableMouse(bool bEnable) const
+{
+	if (IsValid(OwningController))
+	{
+		// Show or hide the mouse cursor
+		OwningController->SetShowMouseCursor(bEnable);
+
+		if (!bEnable)
+		{
+			// Set input mode to game only to focus the game viewport
+			FInputModeGameOnly InputMode;
+			OwningController->SetInputMode(InputMode);
+		}
+		else
+		{
+			// Set input mode to game and UI if mouse cursor is enabled
+			FInputModeGameAndUI InputMode;
+			InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+			OwningController->SetInputMode(InputMode);
+		}
+	}
+}
+
+void AHeroDroid::ResetCharacterProperties()
+{
+	CurrentHealth = 100;
+	OwningController->UpdateHealth(CurrentHealth);
+}
+
 
 void AHeroDroid::ApplyDamage(float Damage, AActor* DamageCauser)
 {
@@ -242,6 +280,8 @@ void AHeroDroid::ApplyDamage(float Damage, AActor* DamageCauser)
 	if(CurrentHealth <= 0)
 	{
 		SpawnNiagaraSystemAtLocation(GetActorTransform(), DestructionFX);
+		ADroidGameMode* GameMode = Cast<ADroidGameMode>(GetWorld()->GetAuthGameMode());
+		GameMode->EndGame();
 	}
 }
 

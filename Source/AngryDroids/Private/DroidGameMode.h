@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "EnemySpawner.h"
+#include "HeroDroid.h"
 #include "GameFramework/GameMode.h"
 #include "Widget/GameHud.h"
 #include "DroidGameMode.generated.h"
@@ -20,6 +21,7 @@ class ANGRYDROIDS_API ADroidGameMode : public AGameMode
 	void SetActivePlayer();
 
 	virtual void BeginPlay() override;
+	virtual void Destroyed() override;
 	void StartWaveTimer();
 
 public:
@@ -32,6 +34,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
 	TSubclassOf<UGameHud> GameHudClass;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
+	float LoadingTime{1};
+
 private:
 	UPROPERTY()
 	AEnemySpawner* EnemySpawner;
@@ -43,18 +48,35 @@ private:
 	TTuple<uint8, uint8> GetDataFromTable(uint8 Wave) const;
 
 	void TriggerNextWave();
-	void EndWave();
+
 
 	FTimerHandle WaveHandler;
+	FTimerHandle LoadingTimeHandle;
 
 	UPROPERTY()
 	UGameHud* GameHud;
 
 public:
 	void StartGame();
+	void EndWave();
 	void ClearWaveTimer();
+	void ClearLoadingTimer();
 
 	void EndGame();
-	
-	
+
+	UFUNCTION()
+	void LoadedNextWave();
+	void InitializeNextWave();
+
+	UFUNCTION()
+	void StartGameButtonClicked();
+
+	UFUNCTION()
+	void ExitGameButtonClicked();
+
+	UFUNCTION()
+	void HomeButtonClicked();
+
+	UPROPERTY()
+	AHeroDroid* HeroDroid;
 };
