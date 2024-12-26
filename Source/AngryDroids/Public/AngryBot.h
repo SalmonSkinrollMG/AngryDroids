@@ -112,7 +112,7 @@ public:
 	float UpdatePlayerLocationFrequency{10.0};
 
 	UPROPERTY(EditAnywhere , BlueprintReadWrite , Category="BotConfig")
-	float ActivationDelay{5.0};
+	float ActivationDelay{3.0};
 
 	UPROPERTY(EditAnywhere , BlueprintReadWrite , Category="BotConfig")
 	float MoveInterpSpeed{5.0};

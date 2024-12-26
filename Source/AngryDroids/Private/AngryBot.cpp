@@ -70,7 +70,7 @@ void AAngryBot::AssignAndActivateEnemy(AActor* PlayerRef)
 void AAngryBot::StartTimerForFire()
 {
 	FTimerHandle TimerHandle; 
-
+	ActivationDelay += FMath::RandRange(1.0f , 2.5f);
 	GetWorld()->GetTimerManager().SetTimer(
 		TimerHandle,
 		this,
